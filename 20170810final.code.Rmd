@@ -1,0 +1,1295 @@
+---
+title: "Analysis of As and Folate"
+author: "Yan Zhong"
+date: "2017/8/9"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Combine data
+
+### 1) combine demographic data
+
+```{r}
+setwd("...")
+library(foreign)
+library(Hmisc)
+demoC<-sasxport.get("demographic\\DEMO_C.XPT")
+demoD<-sasxport.get("demographic\\DEMO_D.XPT")
+demoE<-sasxport.get("demographic\\DEMO_E.XPT")
+demoF<-sasxport.get("demographic\\DEMO_F.XPT")
+demoG<-sasxport.get("demographic\\DEMO_G.XPT")
+demoH<-sasxport.get("demographic\\DEMO_H.XPT")
+newName <- read.csv("demographic/change_name.csv")
+nC<-names(demoC)
+nD<-names(demoD)
+nE<-names(demoE)
+nF<-names(demoF)
+nG<-names(demoG)
+nH<-names(demoH)
+newName$Variable.Name=as.character(newName$Variable.Name)
+newName$new_name=as.character(newName$new_name)
+newName$Variable.Name[newName$Begin.Year==2005]
+
+sum(nC!=tolower(newName$Variable.Name[newName$Begin.Year==2003]))
+names(demoC)= newName$new_name[newName$Begin.Year==2003]
+
+sum(nD!=tolower(newName$Variable.Name[newName$Begin.Year==2005]))
+names(demoD)= newName$new_name[newName$Begin.Year==2005]
+
+sum(nE!=tolower(newName$Variable.Name[newName$Begin.Year==2007]))
+names(demoE)= newName$new_name[newName$Begin.Year==2007]
+
+sum(nF!=tolower(newName$Variable.Name[newName$Begin.Year==2009]))
+names(demoF)= newName$new_name[newName$Begin.Year==2009]
+
+sum(nG!=tolower(newName$Variable.Name[newName$Begin.Year==2011]))
+names(demoG)= newName$new_name[newName$Begin.Year==2011]
+
+sum(nH!=tolower(newName$Variable.Name[newName$Begin.Year==2013]))
+names(demoH)= newName$new_name[newName$Begin.Year==2013]
+
+nC<-names(demoC)
+nD<-names(demoD)
+nE<-names(demoE)
+nF<-names(demoF)
+nG<-names(demoG)
+nH<-names(demoH)
+
+unique_name=unique(c(nC,nD,nE,nF,nG,nH))
+length(unique_name)
+nnum=length(demoC[,1])+length(demoD[,1])+length(demoE[,1])+length(demoF[,1])+length(demoG[,1])+length(demoH[,1])
+
+
+data_frame=data.frame(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,1:nnum)
+names(data_frame)=unique_name
+data_frame[,52]=NA
+n_already=0
+data_frame[(n_already+1):(n_already+length(demoC[,1])),match(nC,unique_name)]=demoC[,]
+n_already=n_already+length(demoC[,1])
+data_frame[(n_already+1):(n_already+length(demoD[,1])),match(nD,unique_name)]=demoD[,]
+n_already=n_already+length(demoD[,1])
+data_frame[(n_already+1):(n_already+length(demoE[,1])),match(nE,unique_name)]=demoE[,]
+n_already=n_already+length(demoE[,1])
+data_frame[(n_already+1):(n_already+length(demoF[,1])),match(nF,unique_name)]=demoF[,]
+n_already=n_already+length(demoF[,1])
+data_frame[(n_already+1):(n_already+length(demoG[,1])),match(nG,unique_name)]=demoG[,]
+n_already=n_already+length(demoG[,1])
+data_frame[(n_already+1):(n_already+length(demoH[,1])),match(nH,unique_name)]=demoH[,]
+n_already=n_already+length(demoH[,1])
+
+# write.table(data_frame,"demographic_combine.txt",row.names=F,col.names=T)
+```
+
+### 2) Combine UAS data
+
+```{r}
+setwd("...")
+library(foreign)
+library(Hmisc)
+UASC<-sasxport.get("UAS\\L06UAS_C.XPT")
+UASD<-sasxport.get("UAS\\UAS_D.XPT")
+UASE<-sasxport.get("UAS\\UAS_E.XPT")
+UASF<-sasxport.get("UAS\\UAS_F.XPT")
+UASG<-sasxport.get("UAS\\UAS_G.XPT")
+UASH<-sasxport.get("UAS\\UAS_H.XPT")
+UTASH<-sasxport.get("UAS\\UTAS_H.XPT")
+
+
+## combine 2003-2011 data, and add wtfsm column
+UAS_data=rbind(UASC,UASD,UASE,UASF,UASG)
+UAS_data$wtfsm=rep(NA,length(UAS_data$seqn))
+
+# ## combine 2011 special samples,no need special samples is contained in total
+# UASSG$wtsa2yr=UASSG$wtfsm
+# names(UASSG)=names(UAS_data)
+# UASSG$wtsa2yr=rep(NA,length(UASSG$seqn))
+# 
+# UAS_data=rbind(UAS_data, UASSG)
+
+## combine 2013 data
+sum(UASH[,1]!=UTASH[,1])
+
+USH=cbind(UASH[,1:3],UTASH[,3],rep(NA,length(UASH[,1])),UASH[4:15],rep(NA,length(UASH[,1])),rep(NA,length(UASH[,1])),rep(NA,length(UASH[,1])))
+names(USH)=names(UAS_data)
+
+UAS_data=rbind(UAS_data,USH)
+length(UAS_data[,1])
+
+
+
+write.table(UAS_data[,1:19],"UAS_combine.txt",row.names=F,col.names=T)
+
+```
+Only 16375 samples have UAS data, and there are still some missing data among them. The special samples are contained in total samples. The final simple number is 15759.
+
+
+## Combine FOLATE and B12 data
+
+```{r}
+setwd("...")
+library(foreign)
+library(Hmisc)
+Folate_B12C<-sasxport.get("FOLATE and B12\\L06NB_C.XPT")
+
+FolateD<-sasxport.get("FOLATE and B12\\FOLATE_D.XPT")
+# begin with 3
+FolateE<-sasxport.get("FOLATE and B12\\FOLATE_E.XPT")
+FolateF<-sasxport.get("FOLATE and B12\\FOLATE_F.XPT")
+FolateG<-sasxport.get("FOLATE and B12\\FOLATE_G.XPT")
+FolateG2<-sasxport.get("FOLATE and B12\\FOLFMS_G.XPT")
+
+B12D<-sasxport.get("FOLATE and B12\\B12_D.XPT")
+B12G<-sasxport.get("FOLATE and B12\\VITB12_G.XPT")
+B12H<-sasxport.get("FOLATE and B12\\VITB12_H.XPT")
+
+B12C<-Folate_B12C[,c(1,4,5)]
+names(B12H)=names(B12G)
+B12=rbind(B12C,B12D,B12G,B12H)
+write.table(B12,"B12.txt",row.names=F,col.names=T)
+
+FolateC <- Folate_B12C[,c(1,2,3,6,7)]
+
+sum(FolateG[,1]!=FolateG2[,1])
+FolateG_all=cbind(FolateG,FolateG2[,14:15])
+names(FolateC)=names(FolateE)
+names(FolateD)=names(FolateE)
+Folate=rbind(FolateC,FolateD,FolateE,FolateF,FolateG_all)
+write.table(Folate,"Folate.txt",row.names=F,col.names=T)
+
+```
+
+## Combine all four matrix 
+```{R}
+setwd("...")
+library(foreign)
+library(Hmisc)
+
+demographic=read.table("demographic_combine.txt",head=T)
+UAS=read.table("UAS_combine.txt",head=T)
+B12=read.table("B12.txt",head=T)
+Folate=read.table("Folate.txt",head=T)
+
+inUAS=match(demographic$SEQN,UAS$seqn)
+inB12=match(demographic$SEQN,B12$seqn)
+inFolate=match(demographic$SEQN,Folate$seqn)
+
+final_combine=cbind(demographic, UAS[inUAS,], B12[inB12,], Folate[inFolate,])
+
+write.table(final_combine,"final_combine.txt",row.names=F,col.names=T)
+
+```
+
+## Select useful data
+
+```{r}
+setwd("...")
+UAS.dat = read.table("final_combine.txt", head=T)
+detec.limit = read.csv("detectionlimits_tableversion.csv", head = T) 
+## This file is gathered from the website of NHANES, which includes all LOD data.
+```
+
+## make subsets (final)
+```{r}
+UAS.dat$survey_year = factor(UAS.dat$SDDSRVYR,levels=3:8, labels = c("0304","0506","0708","0910","1112","1314"))
+## only use 2003-2012 finally because the LOD of 2013-2014 change a lot.
+UAS.dat = UAS.dat[UAS.dat$survey_year != "1314",]
+
+index_retotal = UAS.dat$urxuas3+UAS.dat$urxuas5+UAS.dat$urxuab+UAS.dat$urxuac+UAS.dat$urxudma+UAS.dat$urxumma+UAS.dat$urxuas
+
+summary(!is.na(index_retotal))
+
+UAS.dat = UAS.dat[!is.na(index_retotal),]
+dim(UAS.dat)
+## 13004 data with 03-12 year filter 1314
+
+year.index = match(UAS.dat$SDDSRVYR, detec.limit$SDDSRVYR)
+filter.t = UAS.dat$urxuas > round((detec.limit$URXUAS[year.index]/sqrt(2)),2)
+
+## table: percentage of cases above LOD
+table(UAS.dat$SDDSRVYR,UAS.dat$urxuas > round((detec.limit$URXUAS[year.index]/sqrt(2)),2))
+table(UAS.dat$SDDSRVYR,UAS.dat$urxudma > round((detec.limit$URXUDMA[year.index]/sqrt(2)),2))
+table(UAS.dat$SDDSRVYR,UAS.dat$urxumma > round((detec.limit$URXUMMA[year.index]/sqrt(2)),2))
+table(UAS.dat$SDDSRVYR,UAS.dat$urxuab > round((detec.limit$URXUAB[year.index]/sqrt(2)),2))
+table(UAS.dat$SDDSRVYR,UAS.dat$urxuac > round((detec.limit$URXUAC[year.index]/sqrt(2)),2))
+table(UAS.dat$SDDSRVYR,UAS.dat$urxuas3 > round((detec.limit$URXUAS3[year.index]/sqrt(2)),2))
+table(UAS.dat$SDDSRVYR,UAS.dat$urxuas5 > round((detec.limit$URXUAS5[year.index]/sqrt(2)),2))
+
+table(UAS.dat$RIDAGEYR > 18,UAS.dat$urxuas > round((detec.limit$URXUAS[year.index]/sqrt(2)),2))
+table(UAS.dat$RIDAGEYR > 18,UAS.dat$urxudma > round((detec.limit$URXUDMA[year.index]/sqrt(2)),2))
+table(UAS.dat$RIDAGEYR > 18,UAS.dat$urxumma > round((detec.limit$URXUMMA[year.index]/sqrt(2)),2))
+table(UAS.dat$RIDAGEYR > 18,UAS.dat$urxuab > round((detec.limit$URXUAB[year.index]/sqrt(2)),2))
+table(UAS.dat$RIDAGEYR > 18,UAS.dat$urxuac > round((detec.limit$URXUAC[year.index]/sqrt(2)),2))
+table(UAS.dat$RIDAGEYR > 18,UAS.dat$urxuas3 > round((detec.limit$URXUAS3[year.index]/sqrt(2)),2))
+table(UAS.dat$RIDAGEYR > 18,UAS.dat$urxuas5 > round((detec.limit$URXUAS5[year.index]/sqrt(2)),2))
+
+table(UAS.dat$urxudma > round((detec.limit$URXUDMA[year.index]/sqrt(2)),2))
+table(UAS.dat$urxumma > round((detec.limit$URXUMMA[year.index]/sqrt(2)),2))
+table(UAS.dat$urxuab > round((detec.limit$URXUAB[year.index]/sqrt(2)),2))
+table(UAS.dat$urxuac > round((detec.limit$URXUAC[year.index]/sqrt(2)),2))
+
+UAS.subdat = UAS.dat[filter.t, ]
+dim(UAS.subdat)
+
+year.index2 = match(UAS.subdat$SDDSRVYR, detec.limit$SDDSRVYR)
+filter.dma = UAS.subdat$urxudma > round((detec.limit$URXUDMA[year.index2]/sqrt(2)),2)
+filter.mma = UAS.subdat$urxumma > round((detec.limit$URXUMMA[year.index2]/sqrt(2)),2)
+filter.ab = UAS.subdat$urxuab > round((detec.limit$URXUAB[year.index2]/sqrt(2)),2)
+filter.as3 = UAS.subdat$urxuas3 > round((detec.limit$URXUAS3[year.index2]/sqrt(2)),2)
+filter.as5 = UAS.subdat$urxuas5 > round((detec.limit$URXUAS5[year.index2]/sqrt(2)),2)
+filter.ac = UAS.subdat$urxuac > round((detec.limit$URXUAC[year.index2]/sqrt(2)),2)
+
+```
+
+## select useful data
+```{r}
+table(filter.dma,filter.mma)
+good.dma_mma = filter.dma | filter.mma
+index.choose2 = good.dma_mma
+UAS.fdat = UAS.subdat[index.choose2, ]
+dim(UAS.fdat)
+##11016
+
+UAS.fdat$rMMA = UAS.fdat$urxumma / (UAS.fdat$urxumma+UAS.fdat$urxudma+UAS.fdat$urxuas3+UAS.fdat$urxuas5) *100
+UAS.fdat$rDMA = UAS.fdat$urxudma / (UAS.fdat$urxumma+UAS.fdat$urxudma+UAS.fdat$urxuas3+UAS.fdat$urxuas5) *100
+UAS.fdat$rDMA_MMA = UAS.fdat$urxudma / UAS.fdat$urxumma
+
+UAS.fdat$DMA_iAS = UAS.fdat$urxudma / (UAS.fdat$urxuas3+UAS.fdat$urxuas5) *100
+UAS.fdat$MMA_iAS = UAS.fdat$urxumma / (UAS.fdat$urxuas3+UAS.fdat$urxuas5) *100
+```
+
+## plot distribution
+```{r}
+par(mfrow = c(2,2))
+hist(UAS.fdat$rDMA,breaks = 100, main = "percentage of DMA")
+hist(UAS.fdat$rMMA,breaks = 100, main = "percentage of MMA")
+hist(UAS.fdat$rDMA_MMA,breaks = 100, main = "ratio of DMA/MMA")
+hist(log(UAS.fdat$rDMA_MMA),breaks = 100, main = "ratio of log(DMA/MMA)")
+
+library(ggplot2)
+
+p3 = ggplot(UAS.fdat,aes(rDMA_MMA)) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="DMA/MMA", y="Count")
+p4 = ggplot(UAS.fdat,aes(log(rDMA_MMA))) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="log(DMA/MMA)", y="Count")
+
+p5 = ggplot(UAS.fdat,aes(rDMA)) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="%DMA", y="Count")
+p6 = ggplot(UAS.fdat,aes(rMMA)) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="%MMA", y="Count")
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+
+multiplot(p5,p3,p6,p4,cols = 2)
+
+```
+
+## Distribution of variables
+### Demographic variables
+
+```{r}
+
+UAS.fdat$AGE = UAS.fdat$RIDAGEYR > 18
+UAS.fdat$Race = UAS.fdat$RIDRETH1
+UAS.fdat$Race[UAS.fdat$Race ==2] = 1
+table(UAS.fdat$Race)
+
+summary(UAS.fdat$INDFMPIR)
+UAS.fdat$povertytimes = UAS.fdat$INDFMPIR
+UAS.fdat$povertytimes[UAS.fdat$INDFMPIR <= 1] = 1
+UAS.fdat$povertytimes[UAS.fdat$INDFMPIR >1 & UAS.fdat$INDFMPIR <=2] = 2
+UAS.fdat$povertytimes[UAS.fdat$INDFMPIR >2 & UAS.fdat$INDFMPIR <=3.7] = 3
+UAS.fdat$povertytimes[UAS.fdat$INDFMPIR >3.7] = 4
+table(UAS.fdat$povertytimes)
+
+## for children and adults
+index.children = UAS.fdat$RIDAGEYR <= 18
+index.adults =  UAS.fdat$RIDAGEYR > 18
+
+UAS.fdat$Age.cut = UAS.fdat$RIDAGEYR
+UAS.fdat$Age.cut[UAS.fdat$RIDAGEYR <=10] = 1
+UAS.fdat$Age.cut[UAS.fdat$RIDAGEYR >10 & UAS.fdat$RIDAGEYR <=14] = 2
+UAS.fdat$Age.cut[UAS.fdat$RIDAGEYR >14 & UAS.fdat$RIDAGEYR <=18] = 3
+UAS.fdat$Age.cut[UAS.fdat$RIDAGEYR >18 & UAS.fdat$RIDAGEYR <=30] = 4
+UAS.fdat$Age.cut[UAS.fdat$RIDAGEYR >30 & UAS.fdat$RIDAGEYR <=40] = 5
+UAS.fdat$Age.cut[UAS.fdat$RIDAGEYR >40 & UAS.fdat$RIDAGEYR <=50] = 6
+UAS.fdat$Age.cut[UAS.fdat$RIDAGEYR >50] = 7
+
+table(UAS.fdat$Age.cut)
+summary(UAS.fdat$RIDAGEYR)
+
+```
+
+### import BMI, smoking and creatinine data
+
+```{R}
+setwd("...")
+
+library(foreign)
+library(Hmisc)
+BMIC<-sasxport.get("BMX_C.XPT")
+BMID<-sasxport.get("BMX_D.XPT")
+BMIE<-sasxport.get("BMX_E.XPT")
+BMIF<-sasxport.get("BMX_F.XPT")
+BMIG<-sasxport.get("BMX_G.XPT")
+BMIH<-sasxport.get("BMX_H.XPT")
+
+names(BMIC)
+#BMXBMI
+BMI = rbind(BMIC[,c("seqn","bmxbmi")], BMID[,c("seqn","bmxbmi")], BMIE[,c("seqn","bmxbmi")], BMIF[,c("seqn","bmxbmi")], BMIG[,c("seqn","bmxbmi")], BMIH[,c("seqn","bmxbmi")])
+
+BMI.index = match(UAS.fdat$SEQN,BMI$seqn)
+UAS.fdat2 = UAS.fdat
+UAS.fdat = cbind(UAS.fdat,BMI[BMI.index,])
+
+UAS.fdat$BMI.cut = UAS.fdat$bmxbmi
+UAS.fdat$BMI.cut[UAS.fdat$bmxbmi <18.5] = 1
+UAS.fdat$BMI.cut[UAS.fdat$bmxbmi <=25 & UAS.fdat$bmxbmi >=18.5] = 2
+UAS.fdat$BMI.cut[UAS.fdat$bmxbmi >25] = 3
+## 143 missings
+
+SMOKEC<-sasxport.get("SMQ_C.XPT")
+SMOKED<-sasxport.get("SMQ_D.XPT")
+SMOKEE<-sasxport.get("SMQ_E.XPT")
+SMOKEF<-sasxport.get("SMQ_F.XPT")
+SMOKEG<-sasxport.get("SMQ_G.XPT")
+SMOKEH<-sasxport.get("SMQ_H.XPT")
+
+# #SMQ040 - Do you now smoke cigarettes
+SMOKE = rbind(SMOKEC[,c("seqn","smq040")], SMOKED[,c("seqn","smq040")], SMOKEE[,c("seqn","smq040")], SMOKEF[,c("seqn","smq040")], SMOKEG[,c("seqn","smq040")], SMOKEH[,c("seqn","smq040")])
+# 
+SMOKE.index = match(UAS.fdat$SEQN,SMOKE$seqn)
+UAS.fdat = cbind(UAS.fdat,SMOKE[SMOKE.index,])
+
+UAS.fdat$SMOKE = UAS.fdat$lbxcot
+UAS.fdat$SMOKE[UAS.fdat$lbxcot <1] = 1
+UAS.fdat$SMOKE[UAS.fdat$lbxcot >=1 & UAS.fdat$lbxcot < 15] = 2
+UAS.fdat$SMOKE[UAS.fdat$lbxcot >=15 & UAS.fdat$lbxcot < 100] = 3
+UAS.fdat$SMOKE[UAS.fdat$lbxcot >=100] = 4
+summary(UAS.fdat$SMOKE) # 2606 missings
+
+UAS.fdat$expose = UAS.fdat$urxuas > median(UAS.fdat$urxuas)
+## high exposion if true
+```
+
+### discribution of demographic variable 
+```{r}
+
+weighted.var.se <- function(x, w, na.rm=FALSE)
+#  Computes the variance of a weighted mean following Cochran 1977 definition
+{
+  if (na.rm) { w <- w[i <- !is.na(x)]; x <- x[i] }
+  n = length(w)
+  xWbar = weighted.mean(x,w,na.rm=na.rm)
+  wbar = mean(w)
+  out = n/((n-1)*sum(w)^2)*(sum((w*x-wbar*xWbar)^2)-2*xWbar*sum((w-wbar)*(w*x-wbar*xWbar))+xWbar^2*sum((w-wbar)^2))
+  return(out)
+}
+
+weighted.length= function(w){
+  return(sum(w))
+}
+
+weighted.geom.mean = function(x,w){
+  exp(sum(log(x)*w)/sum(w))
+}
+Discribe = function(x,w){
+  return(c(length(x),weighted.length(w), weighted.geom.mean(x,w), sqrt(weighted.var.se(x,w))))
+}
+
+
+rDMA_des = Discribe(UAS.fdat$rDMA,w = UAS.fdat$wtsa2yr/5)
+rDMA_des
+rMMA_des = Discribe(UAS.fdat$rMMA,w = UAS.fdat$wtsa2yr/5)
+rMMA_des
+rDMA_MMA_des = Discribe(UAS.fdat$rDMA_MMA,w = UAS.fdat$wtsa2yr/5)
+rDMA_MMA_des
+
+group_des = function(x,levels, w = UAS.fdat$wtsa2yr/5){
+  index_na = is.na(levels)
+  n_na = sum(index_na)
+  n_na_weight = sum(w[index_na])
+  levels_unique = sort(unique(levels[!index_na]))
+  result1 = c(NA,NA,NA,NA)
+  for(i in levels_unique){
+    select_level = levels[!index_na] == i
+    result2 = Discribe(x = x[!index_na][select_level],w=w[!index_na][select_level])
+    result1 = rbind(result1,result2)
+  }
+  result1 = rbind(result1[-1,],c(n_na,n_na_weight,0,0))
+  rownames(result1) = c(levels_unique, "missing")
+  result1
+}
+
+group1 = group_des(x = UAS.fdat$rDMA, levels = UAS.fdat$RIAGENDR)
+group2 = group_des(x = UAS.fdat$rDMA, levels = UAS.fdat$Age.cut)
+group3 = group_des(x = UAS.fdat$rDMA, levels = UAS.fdat$Race)
+group4 = group_des(x = UAS.fdat$rDMA, levels = UAS.fdat$povertytimes)
+group5 = group_des(x = UAS.fdat$rDMA, levels = UAS.fdat$BMI.cut)
+group6 = group_des(x = UAS.fdat$rDMA, levels = UAS.fdat$SMOKE)
+group7 = group_des(x = UAS.fdat$rDMA, levels = UAS.fdat$survey_year)
+
+rbind(group1,group2,group3,group4,group5,group6,group7)
+
+
+group1 = group_des(x = UAS.fdat$rMMA, levels = UAS.fdat$RIAGENDR)
+group2 = group_des(x = UAS.fdat$rMMA, levels = UAS.fdat$Age.cut)
+group3 = group_des(x = UAS.fdat$rMMA, levels = UAS.fdat$Race)
+group4 = group_des(x = UAS.fdat$rMMA, levels = UAS.fdat$povertytimes)
+group5 = group_des(x = UAS.fdat$rMMA, levels = UAS.fdat$BMI.cut)
+group6 = group_des(x = UAS.fdat$rMMA, levels = UAS.fdat$SMOKE)
+group7 = group_des(x = UAS.fdat$rMMA, levels = UAS.fdat$survey_year)
+
+rbind(group1,group2,group3,group4,group5,group6,group7)
+
+group1 = group_des(x = UAS.fdat$rDMA_MMA, levels = UAS.fdat$RIAGENDR)
+group2 = group_des(x = UAS.fdat$rDMA_MMA, levels = UAS.fdat$Age.cut)
+group3 = group_des(x = UAS.fdat$rDMA_MMA, levels = UAS.fdat$Race)
+group4 = group_des(x = UAS.fdat$rDMA_MMA, levels = UAS.fdat$povertytimes)
+group5 = group_des(x = UAS.fdat$rDMA_MMA, levels = UAS.fdat$BMI.cut)
+group6 = group_des(x = UAS.fdat$rDMA_MMA, levels = UAS.fdat$SMOKE)
+group7 = group_des(x = UAS.fdat$rDMA_MMA, levels = UAS.fdat$survey_year)
+
+rbind(group1,group2,group3,group4,group5,group6,group7)
+```
+
+### P value for each demographic variables.
+```{r}
+rDMA_gender = lm(rDMA ~ as.factor(RIAGENDR), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_gender)
+
+rDMA_age = lm(rDMA ~ as.factor(Age.cut), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_age)
+
+rDMA_race = lm(rDMA ~ as.factor(Race), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_race)
+
+rDMA_poverty = lm(rDMA ~ as.factor(povertytimes), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_poverty)
+
+rDMA_BMI = lm(rDMA ~ as.factor(BMI.cut), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_BMI)
+
+rDMA_SMOKE= lm(rDMA ~ as.factor(SMOKE), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_SMOKE)
+
+rDMA_survey= lm(rDMA ~ survey_year, weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_survey)
+
+```
+
+```{r}
+rMMA_gender = lm(rMMA ~ as.factor(RIAGENDR), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rMMA_gender)
+rMMA_age = lm(rMMA ~ as.factor(Age.cut), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rMMA_age)
+
+rMMA_race = lm(rMMA ~ as.factor(Race), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rMMA_race)
+
+rMMA_poverty = lm(rMMA ~ as.factor(povertytimes), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rMMA_poverty)
+
+rMMA_BMI = lm(rMMA ~ as.factor(BMI.cut), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rMMA_BMI)
+
+rMMA_SMOKE= lm(rMMA ~ as.factor(SMOKE), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rMMA_SMOKE)
+
+rMMA_survey= lm(rMMA ~ survey_year, weight = wtsa2yr/5, data= UAS.fdat)
+anova(rMMA_survey)
+```
+
+```{r}
+rDMAMMA_gender = lm(log(rDMA_MMA) ~ as.factor(RIAGENDR), weight = wtsa2yr/5, data= UAS.fdat)
+summary(rDMAMMA_gender)
+rDMAMMA_age = lm(log(rDMA_MMA) ~ as.factor(Age.cut), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMAMMA_age)
+
+rDMAMMA_race = lm(log(rDMA_MMA) ~ as.factor(Race), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMAMMA_race)
+
+rDMAMMA_poverty = lm(log(rDMA_MMA) ~ as.factor(povertytimes), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMAMMA_poverty)
+
+rDMAMMA_BMI = lm(log(rDMA_MMA) ~ as.factor(BMI.cut), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMAMMA_BMI)
+
+rDMAMMA_SMOKE= lm(log(rDMA_MMA) ~ as.factor(SMOKE), weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMAMMA_SMOKE)
+
+rDMA_MMA_survey= lm(rDMA_MMA ~ survey_year, weight = wtsa2yr/5, data= UAS.fdat)
+anova(rDMA_MMA_survey)
+
+```
+
+## distribution of folate
+```{R}
+adjust_folate = function(x){
+  return(sapply(10^(0.0188*(log10(x)^3)-2.7109*log10(x)^(-0.5)+3.8276),max,1))
+}
+
+UAS.fdat$folate_adjustsi = UAS.fdat$lbxfolsi
+
+
+UAS.fdat$folate_adjustsi[UAS.fdat$survey_year %in% c("0304","0506")]=
+  adjust_folate(UAS.fdat$lbxfolsi[UAS.fdat$survey_year %in% c("0304","0506")])
+
+
+summary(UAS.fdat$folate_adjustsi)
+
+
+fp1 = ggplot(UAS.fdat,aes(UAS.fdat$folate_adjustsi)) + geom_histogram(bins = 35,color = "grey",size = 0.75)+labs(x="folate (nmol/L)", y="Count") ##+ geom_vline(aes(xintercept=40.3),data=UAS.fdat)
+fp2 = ggplot(UAS.fdat,aes(log(UAS.fdat$folate_adjustsi))) + geom_histogram(bins = 35,color = "grey",size = 0.75)+labs(x="log(folate(nmol/L))", y="Count")
+
+
+multiplot(fp1,fp2,cols = 2)
+multiplot(p5,p3,fp1,p6,p4,fp2,cols = 2)
+
+
+complete.folate = !is.na(UAS.fdat$folate_adjustsi)
+
+group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = rep(1,11016)[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+
+group1 = group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = UAS.fdat$RIAGENDR[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+group2 = group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = UAS.fdat$Age.cut[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+group3 = group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = UAS.fdat$Race[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+group4 = group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = UAS.fdat$povertytimes[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+group5 = group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = UAS.fdat$BMI.cut[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+group6 = group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = UAS.fdat$SMOKE[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+group7 = group_des(x = UAS.fdat$folate_adjustsi[complete.folate], levels = UAS.fdat$survey_year[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+
+rbind(group1,group2,group3,group4,group5,group6,group7)
+
+
+folate_adjustsi_des = Discribe(UAS.fdat$folate_adjustsi[complete.folate],w = UAS.fdat$wtsa2yr[complete.folate]/5)
+folate_adjustsi_des
+
+folate_gender = lm(log(folate_adjustsi) ~ as.factor(RIAGENDR), weight = wtsa2yr, data= UAS.fdat)
+anova(folate_gender)
+
+folate_age = lm(log(folate_adjustsi) ~ as.factor(Age.cut), weight = wtsa2yr, data= UAS.fdat)
+anova(folate_age)
+
+folate_race = lm(log(folate_adjustsi) ~ as.factor(Race), weight = wtsa2yr, data= UAS.fdat)
+anova(folate_race)
+
+folate_poverty = lm(log(folate_adjustsi) ~ as.factor(povertytimes), weight = wtsa2yr, data= UAS.fdat)
+anova(folate_poverty)
+
+folate_BMI = lm(log(folate_adjustsi) ~ as.factor(BMI.cut), weight = wtsa2yr, data= UAS.fdat)
+anova(folate_BMI)
+
+folate_SMOKE= lm(log(folate_adjustsi) ~ as.factor(SMOKE), weight = wtsa2yr, data= UAS.fdat)
+anova(folate_SMOKE)
+
+
+folate_survey= lm(log(folate_adjustsi) ~ survey_year, weight = wtsa2yr, data= UAS.fdat)
+anova(folate_survey)
+
+
+```
+
+
+### distribution of children and adults' groups
+```{r}
+
+p5 = ggplot(UAS.fdat[index.children,],aes(rDMA)) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="%DMA(<=18 years old)", y="Count")
+p6 = ggplot(UAS.fdat[index.children,],aes(rMMA)) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="%MMA(<=18 years old)", y="Count")
+p4 = ggplot(UAS.fdat[index.children,],aes(log(rDMA_MMA))) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="log(DMA/MMA)(<=18 years old)", y="Count")
+
+
+fp2 = ggplot(UAS.fdat[index.children,],aes(log(UAS.fdat$folate_adjustsi[index.children]))) + geom_histogram(bins = 35,color = "grey",size = 0.75)+labs(x="log(folate(nmol/L))(<=18 years old)", y="Count")
+
+multiplot(p5,p4,p6,fp2,cols = 2)
+
+
+p5 = ggplot(UAS.fdat[!index.children,],aes(rDMA)) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="%DMA(>18 years old)", y="Count")
+p6 = ggplot(UAS.fdat[!index.children,],aes(rMMA)) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="%MMA(>18 years old)", y="Count")
+p4 = ggplot(UAS.fdat[!index.children,],aes(log(rDMA_MMA))) + geom_histogram(bins = 33,color = "grey",size = 0.75)+labs(x="log(DMA/MMA)(>18 years old)", y="Count")
+
+
+fp2 = ggplot(UAS.fdat[!index.children,],aes(log(UAS.fdat$folate_adjustsi[!index.children]))) + geom_histogram(bins = 35,color = "grey",size = 0.75)+labs(x="log(folate(nmol/L))(>18 years old)", y="Count")
+
+multiplot(p5,p4,p6,fp2,cols = 2)
+
+```
+
+
+
+## regression for children and adults
+
+```{r}
+library(nlme)
+library(mgcv)
+library(glmnet)
+
+index.folate = ! (is.na(UAS.fdat$lbxfolsi))
+index.folate = ! (is.na(UAS.fdat$folate_adjustsi))
+
+quantile(UAS.fdat$urxuas[index.folate],c(1/3,2/3))
+## change from lbdfol to  lbxfolsi
+table(round(UAS.fdat$lbxfolsi/UAS.fdat$lbdfol,2))
+## use  UAS.fdat$lbxfolsi instand
+sum(index.folate)
+## Adult 2-20ng/ml Child 5-21 ng/ml for UAS.fdat$lbdfol.
+##change this variable here
+
+summary(UAS.fdat$folate_adjustsi)
+```
+
+### DMA for children
+
+
+```{R}
+library(Cairo)
+select.index =  (index.children)  & index.folate
+
+sum(select.index)
+
+UAS.select = UAS.fdat[select.index,]
+
+## 1) use for test data
+UAS.select2 = UAS.select
+UAS.select2$RIAGENDR = as.factor(UAS.select2$RIAGENDR)
+UAS.select2$Age.cut = as.factor(UAS.select2$Age.cut)
+UAS.select2$Race = as.factor(UAS.select2$Race)
+UAS.select2$povertytimes = as.factor(UAS.select2$povertytimes)
+UAS.select2$BMI.cut = as.factor(UAS.select2$BMI.cut)
+UAS.select2$SMOKE = as.factor(UAS.select2$SMOKE)
+UAS.select2$survey_year = as.factor(UAS.select2$survey_year)
+
+## splines use glmnet.
+
+K <- 40 
+knots <- quantile(log(UAS.fdat[select.index,]$folate_adjustsi),seq(0,1,length=K+2))[-c(1,K+2)]
+Z <- outer(log(UAS.fdat[select.index,]$folate_adjustsi),knots,"-")
+Z <- Z*(Z>0)
+colnames(Z) = paste("s",as.character(seq(1,K)), sep="")
+
+reg.data = cbind(as.factor(UAS.select$RIAGENDR),as.factor(UAS.select$Age.cut),as.factor(UAS.select$Race),as.factor(UAS.select$povertytimes),as.factor(UAS.select$BMI.cut),as.factor(UAS.select$SMOKE),UAS.select$survey_year,log(UAS.select$folate_adjustsi),Z)
+complete = complete.cases(reg.data)
+sum(complete)
+
+dummyV1 <- model.matrix(~as.factor(RIAGENDR)+as.factor(Age.cut)+as.factor(Race)+as.factor(povertytimes)+as.factor(BMI.cut)+as.factor(SMOKE)+as.factor(survey_year),UAS.select[complete,])
+reg.data = cbind(dummyV1[,-1],log(UAS.select$folate_adjustsi[complete]),Z[complete,])
+
+
+lambda.choose = c(0.05,1,10,20)
+result12 = glmnet( x = reg.data, y = UAS.select$rDMA[complete], weights = UAS.select$wtsa2yr[complete]/5, family = "gaussian", alpha = 0,penalty.factor = c(rep(0,20),rep(1,K)), lambda = lambda.choose)
+## make plot data
+index.between =  Z[, K-1] == 0 & Z[, 2] > 0 
+spre = predict(result12, reg.data)
+
+test = outer(knots,knots,"-")
+test = test*(test>0)
+
+test.data = as.data.frame(cbind(rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep("0304",K)))
+names(test.data) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year")
+
+test.data$RIAGENDR = factor(test.data$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data$Age.cut = factor(test.data$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data$Race = factor(test.data$Race,levels(as.factor(UAS.select$Race)))
+test.data$povertytimes = factor(test.data$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data$BMI.cut = factor(test.data$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data$SMOKE = factor(test.data$SMOKE, levels(as.factor(UAS.select$SMOKE)))
+test.data$survey_year = factor(test.data$survey_year, levels(as.factor(UAS.select$survey_year)))
+
+test.dummy <- model.matrix(~RIAGENDR + Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year,test.data)
+
+test.pre = predict(result12,cbind(test.dummy[,-1],knots,test))
+
+## plot result of spline
+
+p1 = ggplot(data = as.data.frame(test.pre[2:(K-1),])) +geom_line(aes(y = test.pre[,1][2:(K-1)], x = knots[2:(K-1)], col =  "#FF0033"),size = 1) + geom_line(aes(y = test.pre[,2][2:(K-1)], x = knots[2:(K-1)], col = "3366FF"),size = 1) +geom_line(aes(y = test.pre[,3][2:(K-1)], x = knots[2:(K-1)], col = "00FF66"),size = 1)+  labs(x = "log(folate(nmol/L))", y = "%DMA", title="Penalized Splines Regression(<=18 years old)") +theme(plot.title = element_text(hjust = 0.5,size = 10))+scale_colour_hue("", labels = c("\u03BB = 10", "\u03BB =  1", "\u03BB = 0.2"),breaks = c("#FF0033", "3366FF", "00FF66"))+theme(legend.position =c(0.18,0.85),legend.title=element_blank(),  legend.background=element_blank(), legend.key =element_blank())
+
+
+#+ scale_x_continuous(limits = c(2, 3.5)) 
+
+## linear regression
+
+result2 = lm(rDMA ~  RIAGENDR +Age.cut+ Race + povertytimes + BMI.cut + SMOKE +survey_year+log(folate_adjustsi), data = UAS.select2, weights = wtsa2yr/5)
+summary(result2)
+confint(result2)
+
+
+## test data for regression
+K2 = 40
+knots2 = seq(knots[1],knots[K-1],length.out = K2)
+
+
+test.data2 = as.data.frame(cbind(rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),exp(knots2),rep(0,K2)))
+names(test.data2) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year","folate_adjustsi","rDMA")
+
+test.data2$RIAGENDR = factor(test.data2$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data2$Age.cut = factor(test.data2$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data2$Race = factor(test.data2$Race,levels(as.factor(UAS.select$Race)))
+test.data2$povertytimes = factor(test.data2$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data2$BMI.cut = factor(test.data2$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data2$SMOKE = factor(test.data2$SMOKE,levels(as.factor(UAS.select$SMOKE)))
+test.data2$survey_year = factor(rep("0304",K2),levels(as.factor(UAS.select$survey_year)))
+
+
+test.pre2 = predict(result2,test.data2,interval = "confidence")
+
+
+p2 = ggplot(data = test.data2) +geom_line(aes(x = knots2, y = test.pre2[,1], col = "#00FF66"),size = 1) +geom_line(aes(x = knots2, y = test.pre2[,2], col =  "#FF0033"),size = 1,linetype = 2)+geom_line(aes(x = knots2, y = test.pre2[,3], col =  "#FF0033"),size = 1,linetype = 2)+ theme(legend.position="none")+  labs(x = "log(folate(nmol/L))", y = "%DMA", title="Linear Regression(<=18 years old)") +theme(plot.title = element_text(hjust = 0.5,size = 10)) #+ scale_x_continuous(limits = c(2, 3.5)) #+ scale_y_continuous(limits = c(62, 71)) 
+
+multiplot(p1,p2,cols = 2)
+
+```
+
+### MMA for children
+
+```{R}
+
+select.index =  (index.children)  & index.folate
+# select.index =  index.folate
+
+sum(select.index)
+
+UAS.select = UAS.fdat[select.index,]
+
+## 1) use for test data
+UAS.select2 = UAS.select
+UAS.select2$RIAGENDR = as.factor(UAS.select2$RIAGENDR)
+UAS.select2$Age.cut = as.factor(UAS.select2$Age.cut)
+UAS.select2$Race = as.factor(UAS.select2$Race)
+UAS.select2$povertytimes = as.factor(UAS.select2$povertytimes)
+UAS.select2$BMI.cut = as.factor(UAS.select2$BMI.cut)
+UAS.select2$SMOKE = as.factor(UAS.select2$SMOKE)
+UAS.select2$survey_year = as.factor(UAS.select2$survey_year)
+
+## splines use glmnet.
+
+K <- 40 
+knots <- quantile(log(UAS.fdat[select.index,]$folate_adjustsi),seq(0,1,length=K+2))[-c(1,K+2)]
+Z <- outer(log(UAS.fdat[select.index,]$folate_adjustsi),knots,"-")
+Z <- Z*(Z>0)
+colnames(Z) = paste("s",as.character(seq(1,K)), sep="")
+
+reg.data = cbind(as.factor(UAS.select$RIAGENDR),as.factor(UAS.select$Age.cut),as.factor(UAS.select$Race),as.factor(UAS.select$povertytimes),as.factor(UAS.select$BMI.cut),as.factor(UAS.select$SMOKE),UAS.select$survey_year,log(UAS.select$folate_adjustsi),Z)
+complete = complete.cases(reg.data)
+sum(complete)
+
+dummyV1 <- model.matrix(~as.factor(RIAGENDR)+as.factor(Age.cut)+as.factor(Race)+as.factor(povertytimes)+as.factor(BMI.cut)+as.factor(SMOKE)+as.factor(survey_year),UAS.select[complete,])
+reg.data = cbind(dummyV1[,-1],log(UAS.select$folate_adjustsi[complete]),Z[complete,])
+
+
+lambda.choose = c(0.05,0.2,1,10)
+result12 = glmnet( x = reg.data, y = UAS.select$rMMA[complete], weights = UAS.select$wtsa2yr[complete]/5, family = "gaussian", alpha = 0,penalty.factor = c(rep(0,20),rep(1,K)), lambda = lambda.choose)
+
+## make plot data
+index.between =  Z[, K-1] == 0 & Z[, 2] > 0 
+spre = predict(result12, reg.data)
+
+test = outer(knots,knots,"-")
+test = test*(test>0)
+
+test.data = as.data.frame(cbind(rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep("0304",K)))
+names(test.data) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year")
+
+test.data$RIAGENDR = factor(test.data$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data$Age.cut = factor(test.data$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data$Race = factor(test.data$Race,levels(as.factor(UAS.select$Race)))
+test.data$povertytimes = factor(test.data$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data$BMI.cut = factor(test.data$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data$SMOKE = factor(test.data$SMOKE, levels(as.factor(UAS.select$SMOKE)))
+# test.data$Creatinine = factor(test.data$Creatinine, levels(as.factor(UAS.select$Creatinine)))
+test.data$survey_year = factor(test.data$survey_year, levels(as.factor(UAS.select$survey_year)))
+
+test.dummy <- model.matrix(~RIAGENDR + Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year,test.data)
+
+test.pre = predict(result12,cbind(test.dummy[,-1],knots,test))
+# for(i in 1:length(lambda.choose)) {plot(knots[3:(K-2)],test.pre[,i][3:(K-2)],"l")}
+# cumsum(result12$beta[4:35,3])
+
+## plot result of spline
+
+
+
+p1 = ggplot(data = as.data.frame(test.pre[2:(K-1),])) +geom_line(aes(y = test.pre[,1][2:(K-1)], x = knots[2:(K-1)], col =  "#FF0033"),size = 1) + geom_line(aes(y = test.pre[,2][2:(K-1)], x = knots[2:(K-1)], col = "3366FF"),size = 1) +geom_line(aes(y = test.pre[,3][2:(K-1)], x = knots[2:(K-1)], col = "00FF66"),size = 1)+  labs(x = "log(folate(nmol/L))", y = "%MMA", title="Penalized Splines Regression(<=18 years old)") +theme(plot.title = element_text(hjust = 0.5,size = 10))+scale_colour_hue("", labels = c("\u03BB = 10", "\u03BB =  1", "\u03BB = 0.2"),
+  breaks = c("#FF0033", "3366FF", "00FF66"))+theme(legend.position =c(0.18,0.14),legend.title=element_blank(),
+                                                   legend.background=element_blank(), legend.key =element_blank())
+
+## linear regression
+
+
+result2 = lm(rMMA ~  RIAGENDR +Age.cut+ Race + povertytimes + BMI.cut + SMOKE +survey_year+log(folate_adjustsi), data = UAS.select2, weights = wtsa2yr/5)
+summary(result2)
+confint(result2)
+
+
+## test data for regression
+K2 = 40
+knots2 = seq(knots[1],knots[K-1],length.out = K2)
+# test = outer(seq(knots[c(2,K-1)],length.out = K2),knots,"-")
+
+test.data2 = as.data.frame(cbind(rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),exp(knots2),rep(0,K2)))
+names(test.data2) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year","folate_adjustsi","rDMA")
+
+test.data2$RIAGENDR = factor(test.data2$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data2$Age.cut = factor(test.data2$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data2$Race = factor(test.data2$Race,levels(as.factor(UAS.select$Race)))
+test.data2$povertytimes = factor(test.data2$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data2$BMI.cut = factor(test.data2$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data2$SMOKE = factor(test.data2$SMOKE,levels(as.factor(UAS.select$SMOKE)))
+test.data2$survey_year = factor(rep("0304",K2),levels(as.factor(UAS.select$survey_year)))
+
+
+test.pre2 = predict(result2,test.data2,interval = "confidence")
+
+p2 = ggplot(data = test.data2) +geom_line(aes(x = knots2, y = test.pre2[,1], col = "#00FF66"),size = 1) +geom_line(aes(x = knots2, y = test.pre2[,2], col =  "#FF0033"),size = 1,linetype = 2)+geom_line(aes(x = knots2, y = test.pre2[,3], col =  "#FF0033"),size = 1,linetype = 2)+ theme(legend.position="none")+  labs(x = "log(folate(nmol/L))", y = "%MMA", title="Linear Regression(<=18 years old)")+theme(plot.title = element_text(hjust = 0.5,size = 10)) #+ scale_x_continuous(limits = c(2, 3.5)) #+ scale_y_continuous(limits = c(62, 71)) 
+
+multiplot(p1,p2,cols = 2)
+
+```
+
+### DMA_MMA for children
+
+
+```{R}
+
+select.index =  (index.children)  & index.folate
+# select.index =  index.folate
+
+sum(select.index)
+
+UAS.select = UAS.fdat[select.index,]
+
+## 1) use for test data
+UAS.select2 = UAS.select
+UAS.select2$RIAGENDR = as.factor(UAS.select2$RIAGENDR)
+UAS.select2$Age.cut = as.factor(UAS.select2$Age.cut)
+UAS.select2$Race = as.factor(UAS.select2$Race)
+UAS.select2$povertytimes = as.factor(UAS.select2$povertytimes)
+UAS.select2$BMI.cut = as.factor(UAS.select2$BMI.cut)
+UAS.select2$SMOKE = as.factor(UAS.select2$SMOKE)
+UAS.select2$survey_year = as.factor(UAS.select2$survey_year)
+
+## splines use glmnet.
+
+K <- 40 
+knots <- quantile(log(UAS.fdat[select.index,]$folate_adjustsi),seq(0,1,length=K+2))[-c(1,K+2)]
+Z <- outer(log(UAS.fdat[select.index,]$folate_adjustsi),knots,"-")
+Z <- Z*(Z>0)
+colnames(Z) = paste("s",as.character(seq(1,K)), sep="")
+
+reg.data = cbind(as.factor(UAS.select$RIAGENDR),as.factor(UAS.select$Age.cut),as.factor(UAS.select$Race),as.factor(UAS.select$povertytimes),as.factor(UAS.select$BMI.cut),as.factor(UAS.select$SMOKE),UAS.select$survey_year,log(UAS.select$folate_adjustsi),Z)
+complete = complete.cases(reg.data)
+sum(complete)
+
+dummyV1 <- model.matrix(~as.factor(RIAGENDR)+as.factor(Age.cut)+as.factor(Race)+as.factor(povertytimes)+as.factor(BMI.cut)+as.factor(SMOKE)+as.factor(survey_year),UAS.select[complete,])
+reg.data = cbind(dummyV1[,-1],log(UAS.select$folate_adjustsi[complete]),Z[complete,])
+
+
+lambda.choose = c(0.05,0.2,1,10)
+result12 = glmnet( x = reg.data, y = UAS.select$rDMA_MMA[complete], weights = UAS.select$wtsa2yr[complete]/5, family = "gaussian", alpha = 0,penalty.factor = c(rep(0,20),rep(1,K)), lambda = lambda.choose)
+
+## make plot data
+index.between =  Z[, K-1] == 0 & Z[, 2] > 0 
+spre = predict(result12, reg.data)
+
+test = outer(knots,knots,"-")
+test = test*(test>0)
+
+test.data = as.data.frame(cbind(rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep("0304",K)))
+names(test.data) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year")
+
+test.data$RIAGENDR = factor(test.data$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data$Age.cut = factor(test.data$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data$Race = factor(test.data$Race,levels(as.factor(UAS.select$Race)))
+test.data$povertytimes = factor(test.data$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data$BMI.cut = factor(test.data$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data$SMOKE = factor(test.data$SMOKE, levels(as.factor(UAS.select$SMOKE)))
+test.data$survey_year = factor(test.data$survey_year, levels(as.factor(UAS.select$survey_year)))
+
+test.dummy <- model.matrix(~RIAGENDR + Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year,test.data)
+
+test.pre = predict(result12,cbind(test.dummy[,-1],knots,test))
+
+## plot result of spline
+
+
+p1 = ggplot(data = as.data.frame(test.pre[2:(K-1),])) +geom_line(aes(y = test.pre[,1][2:(K-1)], x = knots[2:(K-1)], col =  "#FF0033"),size = 1) + geom_line(aes(y = test.pre[,2][2:(K-1)], x = knots[2:(K-1)], col = "3366FF"),size = 1) +geom_line(aes(y = test.pre[,3][2:(K-1)], x = knots[2:(K-1)], col = "00FF66"),size = 1)+  labs(x = "log(folate(nmol/L))", y = "log(DMA/MMA)", title="Penalized Splines Regression(<=18 years old)") +theme(plot.title = element_text(hjust = 0.5,size = 10))+scale_colour_hue("", labels = c("\u03BB = 10", "\u03BB =  1", "\u03BB = 0.2"),
+  breaks = c("#FF0033", "3366FF", "00FF66"))+theme(legend.position =c(0.18,0.85),legend.title=element_blank(),
+                                                   legend.background=element_blank(), legend.key =element_blank())
+
+
+## linear regression
+
+result2 = lm(rDMA_MMA ~  RIAGENDR +Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year+log(folate_adjustsi), data = UAS.select2, weights = wtsa2yr/5)
+summary(result2)
+confint(result2)
+
+
+## test data for regression
+K2 = 40
+knots2 = seq(knots[1],knots[K-1],length.out = K2)
+# test = outer(seq(knots[c(2,K-1)],length.out = K2),knots,"-")
+
+
+
+test.data2 = as.data.frame(cbind(rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),exp(knots2),rep(0,K2)))
+names(test.data2) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year","folate_adjustsi","rDMA")
+
+test.data2$RIAGENDR = factor(test.data2$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data2$Age.cut = factor(test.data2$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data2$Race = factor(test.data2$Race,levels(as.factor(UAS.select$Race)))
+test.data2$povertytimes = factor(test.data2$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data2$BMI.cut = factor(test.data2$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data2$SMOKE = factor(test.data2$SMOKE,levels(as.factor(UAS.select$SMOKE)))
+test.data2$survey_year = factor(rep("0304",K2),levels(as.factor(UAS.select$survey_year)))
+
+
+test.pre2 = predict(result2,test.data2,interval = "confidence")
+
+p2 = ggplot(data = test.data2) +geom_line(aes(x = knots2, y = test.pre2[,1], col = "#00FF66"),size = 1) +geom_line(aes(x = knots2, y = test.pre2[,2], col =  "#FF0033"),size = 1,linetype = 2)+geom_line(aes(x = knots2, y = test.pre2[,3], col =  "#FF0033"),size = 1,linetype = 2)+ theme(legend.position="none")+  labs(x = "log(folate(nmol/L))", y = "log(DMA/MMA)", title="Linear Regression(<=18 years old)")+theme(plot.title = element_text(hjust = 0.5,size = 10)) #+ scale_x_continuous(limits = c(2, 3.5)) #+ scale_y_continuous(limits = c(62, 71)) 
+
+multiplot(p1,p2,cols = 2)
+
+```
+
+
+### DMA for adults
+
+```{R}
+select.index =  (index.adults)  & index.folate 
+sum(select.index)
+
+UAS.select = UAS.fdat[select.index,]
+
+## 1) use for test data
+UAS.select2 = UAS.select
+UAS.select2$RIAGENDR = as.factor(UAS.select2$RIAGENDR)
+UAS.select2$Age.cut = as.factor(UAS.select2$Age.cut)
+UAS.select2$Race = as.factor(UAS.select2$Race)
+UAS.select2$povertytimes = as.factor(UAS.select2$povertytimes)
+UAS.select2$BMI.cut = as.factor(UAS.select2$BMI.cut)
+UAS.select2$SMOKE = as.factor(UAS.select2$SMOKE)
+UAS.select2$survey_year = as.factor(UAS.select2$survey_year)
+
+## splines use glmnet.
+
+K <- 40 
+knots <- quantile(log(UAS.fdat[select.index,]$folate_adjustsi),seq(0,1,length=K+2))[-c(1,K+2)]
+Z <- outer(log(UAS.fdat[select.index,]$folate_adjustsi),knots,"-")
+Z <- Z*(Z>0)
+colnames(Z) = paste("s",as.character(seq(1,K)), sep="")
+
+reg.data = cbind(as.factor(UAS.select$RIAGENDR),as.factor(UAS.select$Age.cut),as.factor(UAS.select$Race),as.factor(UAS.select$povertytimes),as.factor(UAS.select$BMI.cut),as.factor(UAS.select$SMOKE),UAS.select$survey_year,log(UAS.select$folate_adjustsi),Z)
+complete = complete.cases(reg.data)
+sum(complete)
+
+dummyV1 <- model.matrix(~as.factor(RIAGENDR)+as.factor(Age.cut)+as.factor(Race)+as.factor(povertytimes)+as.factor(BMI.cut)+as.factor(SMOKE)+as.factor(survey_year),UAS.select[complete,])
+reg.data = cbind(dummyV1[,-1],log(UAS.select$folate_adjustsi[complete]),Z[complete,])
+
+
+lambda.choose = c(0.05,0.2,1,10)
+result12 = glmnet( x = reg.data, y = UAS.select$rDMA[complete], weights = UAS.select$wtsa2yr[complete]/5, family = "gaussian", alpha = 0,penalty.factor = c(rep(0,21),rep(1,K)), lambda = lambda.choose)
+
+## make plot data
+index.between =  Z[, K-1] == 0 & Z[, 2] > 0 
+spre = predict(result12, reg.data)
+
+test = outer(knots,knots,"-")
+test = test*(test>0)
+
+test.data = as.data.frame(cbind(rep(1,K),rep(4,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep("0304",K)))
+names(test.data) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year")
+
+test.data$RIAGENDR = factor(test.data$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data$Age.cut = factor(test.data$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data$Race = factor(test.data$Race,levels(as.factor(UAS.select$Race)))
+test.data$povertytimes = factor(test.data$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data$BMI.cut = factor(test.data$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data$SMOKE = factor(test.data$SMOKE, levels(as.factor(UAS.select$SMOKE)))
+test.data$survey_year = factor(test.data$survey_year, levels(as.factor(UAS.select$survey_year)))
+
+test.dummy <- model.matrix(~RIAGENDR + Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year,test.data)
+
+test.pre = predict(result12,cbind(test.dummy[,-1],knots,test))
+
+
+## plot result of spline
+
+
+p1 = ggplot(data = as.data.frame(test.pre[2:(K-1),])) +geom_line(aes(y = test.pre[,1][2:(K-1)], x = knots[2:(K-1)], col =  "#FF0033"),size = 1) + geom_line(aes(y = test.pre[,2][2:(K-1)], x = knots[2:(K-1)], col = "3366FF"),size = 1) +geom_line(aes(y = test.pre[,3][2:(K-1)], x = knots[2:(K-1)], col = "00FF66"),size = 1)+  labs(x = "log(folate(nmol/L))", y = "%DMA", title="Penalized Splines Regression(>18 years old)") +theme(plot.title = element_text(hjust = 0.5,size = 10))+scale_colour_hue("", labels = c("\u03BB = 10", "\u03BB =  1", "\u03BB = 0.2"),
+  breaks = c("#FF0033", "3366FF", "00FF66"))+theme(legend.position =c(0.18,0.15),legend.title=element_blank(),
+                                                   legend.background=element_blank(), legend.key =element_blank())
+
+
+
+## linear regression
+
+
+result2 = lm(rDMA ~  RIAGENDR +Age.cut+ Race + povertytimes + BMI.cut + SMOKE + survey_year+ log(folate_adjustsi)  , data = UAS.select2, weights = wtsa2yr/5)
+summary(result2)
+confint(result2)
+## test data for regression
+K2 = 40
+knots2 = seq(knots[1],knots[K-1],length.out = K2)
+# test = outer(seq(knots[c(2,K-1)],length.out = K2),knots,"-")
+
+k2_75 = (knots2-2.7)*(knots2>2.7)
+
+
+test.data2 = as.data.frame(cbind(rep(1,K2),rep(4,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),exp(knots2),rep(0,K2)))
+names(test.data2) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year","folate_adjustsi","rDMA")
+
+test.data2$RIAGENDR = factor(test.data2$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data2$Age.cut = factor(test.data2$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data2$Race = factor(test.data2$Race,levels(as.factor(UAS.select$Race)))
+test.data2$povertytimes = factor(test.data2$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data2$BMI.cut = factor(test.data2$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data2$SMOKE = factor(test.data2$SMOKE,levels(as.factor(UAS.select$SMOKE)))
+test.data2$survey_year = factor(rep("0304",K2),levels(as.factor(UAS.select$survey_year)))
+
+test.pre2 = predict(result2,test.data2,interval = "confidence")
+
+
+p2 = ggplot(data = test.data2) +geom_line(aes(x = knots2, y = test.pre2[,1], col = "#00FF66"),size = 1) +geom_line(aes(x = knots2, y = test.pre2[,2], col =  "#FF0033"),size = 1,linetype = 2)+geom_line(aes(x = knots2, y = test.pre2[,3], col =  "#FF0033"),size = 1,linetype = 2)+ theme(legend.position="none")+  labs(x = "log(folate(nmol/L))", y = "%DMA", title="Linear Regression(>18 years old)")+theme(plot.title = element_text(hjust = 0.5,size = 10)) #+ scale_x_continuous(limits = c(2, 3.5)) #+ scale_y_continuous(limits = c(62, 71)) 
+
+multiplot(p1,p2,cols = 2)
+
+```
+
+### MMA for adults
+
+```{R}
+select.index =  (!index.children)  & index.folate 
+sum(select.index)
+
+UAS.select = UAS.fdat[select.index,]
+
+## 1) use for test data
+UAS.select2 = UAS.select
+UAS.select2$RIAGENDR = as.factor(UAS.select2$RIAGENDR)
+UAS.select2$Age.cut = as.factor(UAS.select2$Age.cut)
+UAS.select2$Race = as.factor(UAS.select2$Race)
+UAS.select2$povertytimes = as.factor(UAS.select2$povertytimes)
+UAS.select2$BMI.cut = as.factor(UAS.select2$BMI.cut)
+UAS.select2$SMOKE = as.factor(UAS.select2$SMOKE)
+UAS.select2$survey_year = as.factor(UAS.select2$survey_year)
+
+## splines use glmnet.
+
+K <- 40 
+knots <- quantile(log(UAS.fdat[select.index,]$folate_adjustsi),seq(0,1,length=K+2))[-c(1,K+2)]
+Z <- outer(log(UAS.fdat[select.index,]$folate_adjustsi),knots,"-")
+Z <- Z*(Z>0)
+colnames(Z) = paste("s",as.character(seq(1,K)), sep="")
+
+reg.data = cbind(as.factor(UAS.select$RIAGENDR),as.factor(UAS.select$Age.cut),as.factor(UAS.select$Race),as.factor(UAS.select$povertytimes),as.factor(UAS.select$BMI.cut),as.factor(UAS.select$SMOKE),UAS.select$survey_year,log(UAS.select$folate_adjustsi),Z)
+complete = complete.cases(reg.data)
+sum(complete)
+
+dummyV1 <- model.matrix(~as.factor(RIAGENDR)+as.factor(Age.cut)+as.factor(Race)+as.factor(povertytimes)+as.factor(BMI.cut)+as.factor(SMOKE)+as.factor(survey_year),UAS.select[complete,])
+reg.data = cbind(dummyV1[,-1],log(UAS.select$folate_adjustsi[complete]+1),Z[complete,])
+
+
+lambda.choose = c(0.05,0.2,1,10)
+result12 = glmnet( x = reg.data, y = UAS.select$rMMA[complete], weights = UAS.select$wtsa2yr[complete]/5, family = "gaussian", alpha = 0,penalty.factor = c(rep(0,21),rep(1,K)), lambda = lambda.choose)
+
+## make plot data
+index.between =  Z[, K-1] == 0 & Z[, 2] > 0 
+spre = predict(result12, reg.data)
+
+test = outer(knots,knots,"-")
+test = test*(test>0)
+
+test.data = as.data.frame(cbind(rep(1,K),rep(4,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep("0304",K)))
+names(test.data) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year")
+
+test.data$RIAGENDR = factor(test.data$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data$Age.cut = factor(test.data$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data$Race = factor(test.data$Race,levels(as.factor(UAS.select$Race)))
+test.data$povertytimes = factor(test.data$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data$BMI.cut = factor(test.data$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data$SMOKE = factor(test.data$SMOKE, levels(as.factor(UAS.select$SMOKE)))
+test.data$survey_year = factor(test.data$survey_year, levels(as.factor(UAS.select$survey_year)))
+
+test.dummy <- model.matrix(~RIAGENDR + Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year,test.data)
+
+test.pre = predict(result12,cbind(test.dummy[,-1],knots,test))
+# for(i in 1:length(lambda.choose)) {plot(knots[3:(K-2)],test.pre[,i][3:(K-2)],"l")}
+# cumsum(result12$beta[4:35,3])
+
+## plot result of spline
+
+p1 = ggplot(data = as.data.frame(test.pre[2:(K-1),])) +geom_line(aes(y = test.pre[,1][2:(K-1)], x = knots[2:(K-1)], col =  "#FF0033"),size = 1) + geom_line(aes(y = test.pre[,2][2:(K-1)], x = knots[2:(K-1)], col = "3366FF"),size = 1) +geom_line(aes(y = test.pre[,3][2:(K-1)], x = knots[2:(K-1)], col = "00FF66"),size = 1)+  labs(x = "log(folate(nmol/L))", y = "%MMA", title="Penalized Splines Regression(>18 years old)") +theme(plot.title = element_text(hjust = 0.5,size = 10))+scale_colour_hue("", labels = c("\u03BB = 10", "\u03BB =  1", "\u03BB = 0.2"),
+  breaks = c("#FF0033", "3366FF", "00FF66"))+theme(legend.position =c(0.18,0.85),legend.title=element_blank(),
+                                                   legend.background=element_blank(), legend.key =element_blank())
+
+
+## linear regression
+
+
+result2 = lm(rMMA ~  RIAGENDR +Age.cut+ Race + povertytimes + BMI.cut + SMOKE +survey_year +  log(folate_adjustsi), data = UAS.select2, weights = wtsa2yr/5)
+summary(result2)
+confint(result2)
+
+## test data for regression
+K2 = 40
+knots2 = seq(knots[1],knots[K-1],length.out = K2)
+# test = outer(seq(knots[c(2,K-1)],length.out = K2),knots,"-")
+
+
+
+test.data2 = as.data.frame(cbind(rep(1,K2),rep(4,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),exp(knots2)-1,rep(0,K2)))
+names(test.data2) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year","folate_adjustsi","rDMA")
+
+test.data2$RIAGENDR = factor(test.data2$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data2$Age.cut = factor(test.data2$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data2$Race = factor(test.data2$Race,levels(as.factor(UAS.select$Race)))
+test.data2$povertytimes = factor(test.data2$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data2$BMI.cut = factor(test.data2$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data2$SMOKE = factor(test.data2$SMOKE,levels(as.factor(UAS.select$SMOKE)))
+test.data2$survey_year = factor(rep("0304",K2),levels(as.factor(UAS.select$survey_year)))
+
+test.pre2 = predict(result2,test.data2,interval = "confidence")
+
+
+p2 = ggplot(data = test.data2) +geom_line(aes(x = knots2, y = test.pre2[,1], col = "#00FF66"),size = 1) +geom_line(aes(x = knots2, y = test.pre2[,2], col =  "#FF0033"),size = 1,linetype = 2)+geom_line(aes(x = knots2, y = test.pre2[,3], col =  "#FF0033"),size = 1,linetype = 2)+ theme(legend.position="none")+  labs(x = "log(folate(nmol/L))", y = "MMA%", title="Linear Regression(>18 years old)")+theme(plot.title = element_text(hjust = 0.5,size = 10)) #+ scale_x_continuous(limits = c(2, 3.5)) #+ scale_y_continuous(limits = c(62, 71)) 
+
+multiplot(p1,p2,cols = 2)
+
+```
+
+### DMA_MMA for adults
+
+```{R}
+
+select.index =  (!index.children)  & index.folate
+sum(select.index)
+
+UAS.select = UAS.fdat[select.index,]
+
+## 1) use for test data
+UAS.select2 = UAS.select
+UAS.select2$RIAGENDR = as.factor(UAS.select2$RIAGENDR)
+UAS.select2$Age.cut = as.factor(UAS.select2$Age.cut)
+UAS.select2$Race = as.factor(UAS.select2$Race)
+UAS.select2$povertytimes = as.factor(UAS.select2$povertytimes)
+UAS.select2$BMI.cut = as.factor(UAS.select2$BMI.cut)
+UAS.select2$SMOKE = as.factor(UAS.select2$SMOKE)
+UAS.select2$survey_year = as.factor(UAS.select2$survey_year)
+
+## splines use glmnet.
+
+K <- 40 
+knots <- quantile(log(UAS.fdat[select.index,]$folate_adjustsi),seq(0,1,length=K+2))[-c(1,K+2)]
+Z <- outer(log(UAS.fdat[select.index,]$folate_adjustsi),knots,"-")
+Z <- Z*(Z>0)
+colnames(Z) = paste("s",as.character(seq(1,K)), sep="")
+
+reg.data = cbind(as.factor(UAS.select$RIAGENDR),as.factor(UAS.select$Age.cut),as.factor(UAS.select$Race),as.factor(UAS.select$povertytimes),as.factor(UAS.select$BMI.cut),as.factor(UAS.select$SMOKE),UAS.select$survey_year,log(UAS.select$folate_adjustsi),Z)
+complete = complete.cases(reg.data)
+sum(complete)
+
+dummyV1 <- model.matrix(~as.factor(RIAGENDR)+as.factor(Age.cut)+as.factor(Race)+as.factor(povertytimes)+as.factor(BMI.cut)+as.factor(SMOKE)+as.factor(survey_year),UAS.select[complete,])
+reg.data = cbind(dummyV1[,-1],log(UAS.select$folate_adjustsi[complete]+1),Z[complete,])
+
+
+lambda.choose = c(0.05,0.2,1,10)
+result12 = glmnet( x = reg.data, y = UAS.select$rDMA_MMA[complete], weights = UAS.select$wtsa2yr[complete]/5, family = "gaussian", alpha = 0,penalty.factor = c(rep(0,21),rep(1,K)), lambda = lambda.choose)
+
+## make plot data
+index.between =  Z[, K-1] == 0 & Z[, 2] > 0 
+spre = predict(result12, reg.data)
+
+test = outer(knots,knots,"-")
+test = test*(test>0)
+
+test.data = as.data.frame(cbind(rep(1,K),rep(4,K),rep(1,K),rep(1,K),rep(1,K),rep(1,K),rep("0304",K)))
+names(test.data) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year")
+
+test.data$RIAGENDR = factor(test.data$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data$Age.cut = factor(test.data$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data$Race = factor(test.data$Race,levels(as.factor(UAS.select$Race)))
+test.data$povertytimes = factor(test.data$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data$BMI.cut = factor(test.data$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data$SMOKE = factor(test.data$SMOKE, levels(as.factor(UAS.select$SMOKE)))
+test.data$survey_year = factor(test.data$survey_year, levels(as.factor(UAS.select$survey_year)))
+
+test.dummy <- model.matrix(~RIAGENDR + Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year,test.data)
+
+test.pre = predict(result12,cbind(test.dummy[,-1],knots,test))
+
+
+## plot result of spline
+
+p1 = ggplot(data = as.data.frame(test.pre[2:(K-1),])) +geom_line(aes(y = test.pre[,1][2:(K-1)], x = knots[2:(K-1)], col =  "#FF0033"),size = 1) + geom_line(aes(y = test.pre[,2][2:(K-1)], x = knots[2:(K-1)], col = "3366FF"),size = 1) +geom_line(aes(y = test.pre[,3][2:(K-1)], x = knots[2:(K-1)], col = "00FF66"),size = 1)+  labs(x = "log(folate(nmol/L))", y = "log(DMA/MMA)", title="Penalized Splines Regression(>18 years old)") +theme(plot.title = element_text(hjust = 0.5,size = 10))+scale_colour_hue("", labels = c("\u03BB = 10", "\u03BB =  1", "\u03BB = 0.2"),
+  breaks = c("#FF0033", "3366FF", "00FF66"))+theme(legend.position =c(0.18,0.15),legend.title=element_blank(),
+                                                   legend.background=element_blank(), legend.key =element_blank())
+
+
+## linear regression
+
+
+result2 = lm(rDMA_MMA ~  RIAGENDR +Age.cut+ Race + povertytimes + BMI.cut + SMOKE  +survey_year+log(folate_adjustsi), data = UAS.select2, weights = wtsa2yr/5)
+summary(result2)
+confint(result2)
+
+## test data for regression
+K2 = 40
+knots2 = seq(knots[1],knots[K-1],length.out = K2)
+
+
+test.data2 = as.data.frame(cbind(rep(1,K2),rep(4,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),rep(1,K2),exp(knots2)-1,rep(0,K2)))
+names(test.data2) = c("RIAGENDR","Age.cut","Race","povertytimes","BMI.cut","SMOKE","survey_year","folate_adjustsi","rDMA")
+
+test.data2$RIAGENDR = factor(test.data2$RIAGENDR, levels(as.factor(UAS.select$RIAGENDR)))
+test.data2$Age.cut = factor(test.data2$Age.cut,levels(as.factor(UAS.select$Age.cut)))
+test.data2$Race = factor(test.data2$Race,levels(as.factor(UAS.select$Race)))
+test.data2$povertytimes = factor(test.data2$povertytimes,levels(as.factor(UAS.select$povertytimes)))
+test.data2$BMI.cut = factor(test.data2$BMI.cut,levels(as.factor(UAS.select$BMI.cut)))
+test.data2$SMOKE = factor(test.data2$SMOKE,levels(as.factor(UAS.select$SMOKE)))
+test.data2$survey_year = factor(rep("0304",K2),levels(as.factor(UAS.select$survey_year)))
+
+
+test.pre2 = predict(result2,test.data2,interval = "confidence")
+
+
+p2 = ggplot(data = test.data2) +geom_line(aes(x = knots2, y = test.pre2[,1], col = "#00FF66"),size = 1) +geom_line(aes(x = knots2, y = test.pre2[,2], col =  "#FF0033"),size = 1,linetype = 2)+geom_line(aes(x = knots2, y = test.pre2[,3], col =  "#FF0033"),size = 1,linetype = 2)+ theme(legend.position="none")+  labs(x = "log(folate(nmol/L))", y = "log(DMA/MMA)", title="Linear Regression(>18 years old)")+theme(plot.title = element_text(hjust = 0.5,size = 10)) #+ scale_x_continuous(limits = c(2, 3.5)) #+ scale_y_continuous(limits = c(62, 71)) 
+
+multiplot(p1,p2,cols = 2)
+
+```
+
+
+
